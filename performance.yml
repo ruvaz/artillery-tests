@@ -1,28 +1,56 @@
 config:
-  target: "https://api.todoist.com"
-  phases:
-    - duration: 1
-      arrivalRate: 1
-      name: "Phase 1"
+  environments:
+    production:
+      target: "https://api.todoist.com"
+      phases:
+        - duration: 10
+          arrivalRate: 2
+          name: "PRD Phase1"
+        - duration: 10
+            arrivalRate: 3
+            name: "PRD Phase 2"
+        - duration: 5
+          arrivalRate: 4
+          name: "PRD Phase 3"
+    staging:
+      target: "https://localhost:9080"
+      phases:
+        - duration: 60
+          arrivalRate: 5
+          name: "Phase 1"
+        - duration: 120
+          arrivalRate: 15
+          name: "Phase 2"
+        - duration: 180
+          arrivalRate: 9
+          name: "Phase 3"
   defaults:
     headers:
-        Authorization: Bearer {{ $processEnvironment.TOKEN }}
-        Content-Type: application/json
-    scenarios:
-      - flow:
-        - get:
-            url: "/rest/v1/projects/{{ id }}"
-        - post:
-            url: "/rest/v1/projects/{{ id }}"
-            json:
-              name: "Demo"
-              capture:
-                json: "$.id"
-                as: "id"
-        - log: "Current id is {{id}}
+      Authorization: Bearer {{ $processEnvironment.TOKEN }} #export TOKEN required
+      Content-Type: application/json
 
-##processor: "./myProcessor.js"
-## for more information  https://artillery.io/docs/script.reference/
-
-
-##77ef18f0d2b1c5a4ab4163d21949cab1e4fb0718
+scenarios:
+  - name: "Projects Tests"
+    flow:
+      - get:
+          name: "Get all projects"
+          url: "/rest/v1/projects"
+      - post:
+          name: "Create Project"
+          url: "/rest/v1/projects"
+          json:
+            name: "Demo project"
+          capture:
+            json: "$.id"
+            as: "idProject"
+      - log: "Current Id created is: {{idProject}}"
+      - get:
+          name: "Get a project"
+          url: "/rest/v1/projects/{{idProject}}"
+      - post:
+          name: "Update Project"
+          url: "/rest/v1/projects/{{idProject}}"
+          json:
+            name: "Wizeline Project updated"
+      - delete:
+          url: "/rest/v1/projects/{{idProject}}"
